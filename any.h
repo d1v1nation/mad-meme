@@ -71,6 +71,7 @@ public:
         } else if (state == STATE_BIG) {
             void* nheap = allocator();
             copier(nheap, *(void**)&other.storage);
+            *(void**)&storage = nheap;
         }
     }
 
@@ -83,7 +84,7 @@ public:
         }
     }
 
-    template <class VT>
+    template <typename VT, typename S = typename std::enable_if<!std::is_same_v<std::decay_t<VT>, any>>::type>
     any(VT&& val) {
         using VT_d = std::decay_t<VT>;
         if (sizeof(VT_d) <= SMALL_SIZE) {
@@ -99,10 +100,11 @@ public:
 
         copier = copy_content<VT_d>;
         mover = move_content<VT_d>;
-
+        allocator = allocate<VT_d>;
     }
 
-    //todo : inplace
+    // emplace :: retain emplacer as well as copier, mover, deleter, allocator ...
+    // too boring.
 
     any& operator=(any const &other) {
         any(other).swap(*this);
@@ -114,11 +116,15 @@ public:
         return *this;
     }
 
+    template <typename VT, typename S = typename std::enable_if<!std::is_same_v<std::decay_t<VT>, any>>::type>
+    any& operator=(VT&& other) {
+        any(std::forward<VT>(other)).swap(*this);
+        return *this;
+    };
+
     ~any() {
         clear();
     }
-
-    // todo vtype moveassign
 
 
     template <typename VT>

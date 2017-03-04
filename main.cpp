@@ -1,8 +1,21 @@
 #include <iostream>
 #include "any.h"
+#include <any>
 
 struct alignas(128) big {
-    int fields[32];
+    int field;
+
+    big(int i) {
+        field = i;
+    }
+
+    big(const big& other) {
+        field = other.field;
+    }
+
+    big(big&& other) {
+        field = other.field;
+    }
 };
 
 int main() {
@@ -18,16 +31,17 @@ int main() {
     a = 4;
 
     // 3
-    big d{220};
-    d.fields[0] = 220;
+    big d(220);
     any c(d);
-    std::cout << any_cast<big>(c).fields[0] << '\n';
+    std::cout << any_cast<big>(c).field << '\n';
 
+
+    // 4
     for (int i = 0; i < 100000; i++) {
-        int temp;
-        temp = 111;
-        any temp2(temp);
-        std::cout << any_cast<int>(temp2) << '\n';
+        big cc(i);
+        any temp1(cc);
+        any temp2(temp1);
+        std::cout << any_cast<big>(temp2).field << '\n';
 
     }
     return 0;
